@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# VS Code
+.vscode/
+
+# Environment variables
+.env
+
+# Logs
+logs/
+*.log
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Pytest
+.pytest_cache/
+
+# Dead Letter Queue
+dead_letters/
+
+# OS files
+Thumbs.db
+.DS_Store
