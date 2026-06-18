@@ -55,6 +55,7 @@ FORECAST_MODEL_PATH = "forecast_model.pkl"
 # Global placeholder allocations
 ANOMALY_MODEL = None
 FORECAST_MODEL = None
+ESP32_STATUS = "offline"
 class WeatherPayload(BaseModel):
     temperature: float = Field(..., ge=-40.0, le=60.0)
     humidity: float = Field(..., ge=0.0, le=100.0)
@@ -172,15 +173,24 @@ async def mqtt_subscriber_loop():
                 retry_delay = 5
                 print(f"{C_CYAN}🔵 [SYSTEM ONLINE] Connected to Broker: {MQTT_BROKER} (Authenticated){C_RESET}")
                 
-                await client.subscribe(MQTT_TOPIC)
+                await client.subscribe("weather/#")
                 
                 async for message in client.messages:
+                    global ESP32_STATUS
                     try:
                         raw_payload = message.payload.decode("utf-8").strip()
                         if raw_payload.startswith(("'", '"')) and raw_payload.endswith(("'", '"')):
                             raw_payload = raw_payload[1:-1]
                         
                         data = json.loads(raw_payload)
+
+                        # Check if it's a status message
+                        if message.topic.value == "weather/status":
+                            ESP32_STATUS = data.get("status", "offline")
+                            print(f"{C_CYAN}📡 [ESP32 STATUS] Connectivity changed to: {ESP32_STATUS.upper()}{C_RESET}")
+                            continue
+
+                        # If not, it's a telemetry message
                         validated_data = WeatherPayload(**data)
                         
                         is_anomaly, pred_temp, conf = execute_ml_inference(validated_data)
@@ -219,7 +229,8 @@ async def health_check():
     return {
         "status": "healthy", 
         "system_uptime_seconds": round(time.time() - START_TIME, 2),
-        "database_total_records": total_records
+        "database_total_records": total_records,
+        "esp32_status": ESP32_STATUS
     }
 @app.post("/api/config", dependencies=[Depends(verify_api_key)])
 async def sync_config(config: ConfigPayload):

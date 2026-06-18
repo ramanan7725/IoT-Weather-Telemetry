@@ -131,6 +131,12 @@ with st.sidebar:
         st.metric(label="DB Records", value=f"{health_metrics.get('database_total_records', 'Unknown')}")
     else: 
         st.error("🔴 PIPELINE ENGINE: OFFLINE")
+
+    st.markdown("### 📡 Hardware Telemetry")
+    if health_metrics.get("esp32_status") == "online":
+        st.success("📡 ESP32 Sensor: CONNECTED")
+    else:
+        st.error("🔌 ESP32 Sensor: DISCONNECTED")
     
     st.markdown("---")
     # --- 2. ADVANCED DATA QUERYING ---
