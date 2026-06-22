@@ -1,62 +1,52 @@
 import sqlite3
-from datetime import datetime, timedelta
 import random
+from datetime import datetime, timedelta
 
 DB_FILE = "weather_data.db"
 
-def backfill_data():
+def simulate_day():
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     
-    # Ensure table exists
-    cursor.execute("""CREATE TABLE IF NOT EXISTS telemetry (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        timestamp TEXT NOT NULL,
-        temperature REAL NOT NULL,
-        humidity REAL NOT NULL,
-        pressure REAL NOT NULL,
-        is_anomaly INTEGER DEFAULT 0,
-        predicted_temp_next_hour REAL DEFAULT 0.0,
-        confidence_score REAL DEFAULT 95.0
-    )""")
+    # Clear existing data to ensure a fresh, clean graph
+    cursor.execute("DELETE FROM telemetry")
     
-    start_date = datetime(2026, 6, 8, 0, 0, 0)
-    end_date = datetime(2026, 6, 15, 23, 59, 59)
+    start_time = datetime.now() - timedelta(days=1)
+    print("📈 Generating correlated 24-hour telemetry...")
     
-    current = start_date
-    inserted = 0
-    
-    while current <= end_date:
-        # 24 points per day (hourly)
-        for hour in range(24):
-            ts = current + timedelta(hours=hour)
-            
-            # Realistic variations (base + daily cycle + noise)
-            base_temp = 22 + 8 * (hour - 12) / 12  # diurnal cycle
-            temp = round(base_temp + random.uniform(-3, 3), 2)
-            hum = round(45 + random.uniform(-15, 15), 1)
-            pres = round(1010 + random.uniform(-8, 8), 1)
-            
-            # Occasional anomalies
-            is_anomaly = 1 if random.random() < 0.08 or temp > 38 or temp < 8 else 0
-            
-            pred_temp = round(temp + random.uniform(-1.5, 2.0), 2)
-            conf = round(random.uniform(82, 99), 1)
-            
-            cursor.execute("""INSERT INTO telemetry 
-                (timestamp, temperature, humidity, pressure, is_anomaly, predicted_temp_next_hour, confidence_score)
-                VALUES (?, ?, ?, ?, ?, ?, ?)""", 
-                (ts.strftime("%Y-%m-%d %H:%M:%S"), temp, hum, pres, is_anomaly, pred_temp, conf))
-            
-            inserted += 1
-            if inserted % 100 == 0:
-                print(f"Inserted {inserted} records...")
+    # Generate 2880 records (1 record every 30 seconds for 24 hours)
+    for i in range(2880):
+        ts = start_time + timedelta(seconds=i * 30)
+        hour = ts.hour + ts.minute / 60
         
-        current += timedelta(days=1)
-    
+        # 1. Temperature: Sine wave peak at 2:00 PM (14.0)
+        base_temp = 22 + 8 * (-( (hour-14)**2 ) / 72 + 1)
+        temp = round(base_temp + random.uniform(-0.5, 0.5), 2)
+        
+        # 2. Humidity: Inverse to temperature (General rule of thumb)
+        humidity = round(65 - (temp - 20) * 1.2 + random.uniform(-2, 2), 2)
+        humidity = max(20, min(95, humidity)) # Keep within 20-95%
+        
+        # 3. Pressure: Slowly changing atmospheric pressure
+        pressure = round(1013 + 3 * (-( (hour-12)**2 ) / 144) + random.uniform(-0.5, 0.5), 2)
+        
+        # 4. Inject Spikes/Dips (Anomalies) - 2% chance
+        is_anomaly = 0
+        if random.random() < 0.02:
+            temp += random.choice([12.0, -12.0])
+            humidity += random.choice([20.0, -20.0])
+            pressure += random.choice([15.0, -15.0])
+            is_anomaly = 1
+            
+        cursor.execute("""
+            INSERT INTO telemetry 
+            (timestamp, temperature, humidity, pressure, is_anomaly)
+            VALUES (?, ?, ?, ?, ?)
+        """, (ts.strftime("%Y-%m-%d %H:%M:%S"), temp, humidity, pressure, is_anomaly))
+        
     conn.commit()
     conn.close()
-    print(f"✅ Backfill complete. Inserted {inserted} records from June 8 to June 15, 2026.")
+    print("✅ Data simulation complete.")
 
 if __name__ == "__main__":
-    backfill_data()
+    simulate_day()
