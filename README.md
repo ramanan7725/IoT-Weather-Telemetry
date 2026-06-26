@@ -1,43 +1,184 @@
-# IoT Weather Monitoring System
+# 🌤️ IoT Weather Monitoring System
 
-A distributed, real-time weather monitoring system. ESP32 sensor → MQTT → Machine Learning → Live Dashboard.
+A distributed IoT weather monitoring system built using **ESP32**, **MQTT**, **FastAPI**, **SQLite**, **Machine Learning**, and **Streamlit**.
 
-**Status:** 6.5/10 (Functional MVP, awaiting hardware validation)
+The system collects environmental data from ESP32 sensors, performs real-time anomaly detection and temperature forecasting, stores telemetry in a database, and visualizes everything through a live dashboard.
 
-## Architecture
+---
 
+## Features
 
-- **Sensor:** ESP32 (BME690) publishing MQTT data.
-- **Broker:** Mosquitto (Windows native).
-- **Backend:** FastAPI (Python) for ingestion, validation, and SQLite persistence.
-- **Persistence:** SQLite with Write-Ahead Logging (WAL) for concurrent access.
-- **Dashboard:** Streamlit with Plotly charts and auto-refresh.
+* Real-time weather telemetry
+* MQTT-based communication
+* FastAPI backend
+* SQLite database (WAL mode)
+* Multi-sensor support
+* Live Streamlit dashboard
+* AI-based anomaly detection
+* Temperature forecasting
+* CSV data export
+* System health monitoring
+* Tailscale remote connectivity
 
-## Project Phases
+---
 
-| Phase | Host | Tech Stack |
-| :--- | :--- | :--- |
-| **1A: Prototype** | Laptop | MQTT + FastAPI + Kaggle ML models |
-| **1: Edge** | Pi 4 or 5 | MQTT + FastAPI + Real Sensor Data |
-| **1 Pro: Scaled** | Pi 4 or 5 | Real-time Fusion + Advanced ML Monitoring |
+## System Architecture
 
-## Machine Learning Strategy
-- **Models:** XGBRegressor (Forecasting) + IsolationForest (Anomaly Detection).
-- **Current State:** Models are trained on synthetic Kaggle data (placeholder).
-- **Real Data Pipeline:** 1. Collect 500+ readings using BME690.
-    2. Implement cumulative retraining (retrain on *all* data when MAE > 1.5°C).
-    3. Monitor degradation via `/api/ml/performance`.
+```text
+ESP32
+   │
+   ▼
+MQTT Broker (Mosquitto)
+   │
+   ▼
+FastAPI Backend
+   ├── Payload Validation
+   ├── ML Inference
+   ├── SQLite Storage
+   └── Health API
+   │
+   ▼
+SQLite Database
+   │
+   ▼
+Streamlit Dashboard
+```
 
-## Setup & Usage
+---
 
-### 1. Prerequisites
-- Python 3.10+
-- Mosquitto Broker (Installed to `D:\Program Files\mosquitto\`)
+## Tech Stack
 
-### 2. Configuration
-Create a `.env` file in the root directory:
-```env
-MQTT_BROKER=100.110.195.55
-MQTT_PORT=1883
-MQTT_USER=your_user
-MQTT_PASS=your_pass
+### Hardware
+
+* ESP32-WROOM-32
+* BME690 Sensor
+
+### Backend
+
+* FastAPI
+* Paho MQTT
+* SQLite
+
+### Machine Learning
+
+* Isolation Forest
+* XGBoost
+
+### Dashboard
+
+* Streamlit
+* Plotly
+
+### Networking
+
+* Mosquitto MQTT
+* Tailscale
+
+---
+
+## Project Structure
+
+```text
+IoT_Weather_Project/
+│
+├── main.py                 # FastAPI backend
+├── dashboard.py            # Streamlit dashboard
+├── weather_data.db         # SQLite database
+├── anomaly_model.pkl
+├── temperature_model.pkl
+├── rejected_payloads.log
+├── requirements.txt
+└── README.md
+```
+
+---
+
+## Current Status
+
+### Completed
+
+* MQTT communication
+* FastAPI backend
+* SQLite storage
+* Multi-sensor support
+* Live dashboard
+* ML inference
+* Health monitoring
+* CSV export
+
+### In Progress
+
+* Real sensor data collection
+* ML model retraining
+* REST API expansion
+* Documentation
+
+### Planned
+
+* Raspberry Pi deployment
+* Docker support
+* HTTPS/TLS
+* JWT Authentication
+* Automated testing
+* Cloud deployment
+
+---
+
+## Running the Project
+
+### 1. Clone the repository
+
+```bash
+git clone <repository-url>
+cd IoT_Weather_Project
+```
+
+### 2. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Start the backend
+
+```bash
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+### 4. Launch the dashboard
+
+```bash
+streamlit run dashboard.py
+```
+
+---
+
+## Dashboard
+
+The dashboard provides:
+
+* Live sensor readings
+* Historical trends
+* AI anomaly alerts
+* Temperature prediction
+* Model confidence
+* CSV export
+* Device status monitoring
+
+---
+
+## Future Improvements
+
+* Raspberry Pi edge deployment
+* Multi-node sensor network
+* OpenWeatherMap integration
+* Docker containerization
+* Prometheus & Grafana monitoring
+* OTA firmware updates
+* Enhanced ML models trained on real-world sensor data
+
+---
+
+## License
+
+This project was developed as a portfolio project to demonstrate IoT system design, backend development, and applied machine learning.
